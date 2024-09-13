@@ -1,3 +1,22 @@
+// import { assign, createActor, setup } from "xstate";
+// import { speechstate } from "speechstate";
+// import { createBrowserInspector } from "@statelyai/inspect";
+// import { KEY, NLU_KEY } from "./azure.js";
+
+// const inspector = createBrowserInspector();
+
+// const azureCredentials = {
+//   endpoint: "https://northeurope.api.cognitive.microsoft.com/sts/v1.0/issuetoken",
+//   key: KEY,
+// };
+
+// const azureLanguageCredentials = {
+//   endpoint: "https://260026.cognitiveservices.azure.com/language/:analyze-conversations?api-version=2022-10-01-preview",
+//   key: NLU_KEY,
+//   deploymentName: "Appointment",
+//   projectName: "Appointment",
+// };
+
 import { assign, createActor, setup } from "xstate";
 import { speechstate } from "speechstate";
 import { createBrowserInspector } from "@statelyai/inspect";
@@ -16,7 +35,6 @@ const azureLanguageCredentials = {
   deploymentName: "Appointment",
   projectName: "Appointment",
 };
-
 const settings = {
   azureLanguageCredentials: azureLanguageCredentials,
   azureCredentials: azureCredentials,
@@ -46,9 +64,7 @@ const grammar = {
   "donald trump": { who: "Donald Trump is a businessman and former U.S. president who served from 2017 to 2021, known for his unconventional political style and polarizing policies. He remains an influential figure in American politics, continuing to shape the Republican Party and public discourse." },
   "vladimir putin": { who: "Vladimir Putin has been a dominant figure in Russian politics, serving as President or Prime Minister of Russia since 1999. His leadership is marked by efforts to centralize power, assert Russian influence globally, and maintain control over domestic politics, often drawing significant international scrutiny and controversy." },
   "haile gebresilassie": { who: "Haile Gebreselassie is an Ethiopian long-distance runner renowned for his dominance in the marathon and track events, having set numerous world records and won two Olympic gold medals. His remarkable achievements and enduring influence have made him a celebrated figure in the world of athletics." },
-  "cristiano ronaldo": { who: "Cristiano Ronaldo is a Portuguese professional footballer widely regarded as one of the greatest players of all time, known for his prolific goal-scoring ability and numerous awards, including multiple Ballon d'Or titles. His career spans top clubs like Manchester United, Real Madrid, and Juventus, as well as a significant impact on the Portuguese national team." },
-  "barkot dawit": { response: "Barkot Dawit, a talented first-grader born on January 27, 2027, attends Härlandatjärnskolan. He loves reading books, solving mathematics problems, and has a passion for football and the FC mobile game, living with his parents at Studiegången 17." },
-  "maraky dawit": { response: "Maraky Dawit is a brilliant and lovely 10-year-old who celebrated her birthday on August 16. She has a diverse range of interests, including reading, music, sports, and dolls, and she loves playing football, swimming, and cycling."},
+  "cristiano ronaldo": { who: "Cristiano Ronaldo is a Portuguese professional footballer widely regarded as one of the greatest players of all time, known for his prolific goal-scoring ability and numerous awards, including multiple Ballon d'Or titles. His career spans top clubs like Manchester United, Real Madrid, and Juventus, as well as a significant impact on the Portuguese national team." },  
 };
 
 const personInformation = {
@@ -61,13 +77,11 @@ const personInformation = {
   "donald trump": { response: "Donald Trump is a businessman and former U.S. president who served from 2017 to 2021, known for his unconventional political style and polarizing policies. He remains an influential figure in American politics, continuing to shape the Republican Party and public discourse." },
   "vladimir putin": { response: "Vladimir Putin has been a dominant figure in Russian politics, serving as President or Prime Minister of Russia since 1999. His leadership is marked by efforts to centralize power, assert Russian influence globally, and maintain control over domestic politics, often drawing significant international scrutiny and controversy." },
   "haile gebresilassie": { response: "Haile Gebreselassie is an Ethiopian long-distance runner renowned for his dominance in the marathon and track events, having set numerous world records and won two Olympic gold medals. His remarkable achievements and enduring influence have made him a celebrated figure in the world of athletics." },
-  "cristiano ronaldo": { response: "Cristiano Ronaldo is a Portuguese professional footballer widely regarded as one of the greatest players of all time, known for his prolific goal-scoring ability and numerous awards, including multiple Ballon d'Or titles. His career spans top clubs like Manchester United, Real Madrid, and Juventus, as well as a significant impact on the Portuguese national team." },
-  "barkot dawit": { response: "Barkot Dawit, a talented first-grader born on January 27, 2027, attends Härlandatjärnskolan. He loves reading books, solving mathematics problems, and has a passion for football and the FC mobile game, living with his parents at Studiegången 17." },
-  "maraky dawit": { response: "Maraky Dawit is a brilliant and lovely 10-year-old who celebrated her birthday on August 16. She has a diverse range of interests, including reading, music, sports, and dolls, and she loves playing football, swimming, and cycling."},
+  "cristiano ronaldo": { response: "Cristiano Ronaldo is a Portuguese professional footballer widely regarded as one of the greatest players of all time, known for his prolific goal-scoring ability and numerous awards, including multiple Ballon d'Or titles. His career spans top clubs like Manchester United, Real Madrid, and Juventus, as well as a significant impact on the Portuguese national team." },  
 };
 
 function isPersonInformation(utterance) {
-  console.log('Checking if person is in information:', utterance.toLowerCase());  // Add a log for debugging
+  console.log('Checking if person is in information:', utterance.toLowerCase());  
   return utterance.toLowerCase() in personInformation;
 }
 
@@ -81,12 +95,47 @@ function getResponse(utterance) {
   return (personInfo || {}).response;  
 }
 
-const userPrompts = ["Please say something!", "Are you there?", "I cannot hear you."];
+//const userPrompts = ["Please say something!", "Are you there?", "I cannot hear you.", "Are you still with me?", "I’m waiting for your reply."];
 
-function randomRepeat(myArray) {
-  const randomIndex = Math.floor(Math.random() * myArray.length);
-  return myArray[randomIndex];
+function randomRepeat(userPrompts) {
+  const prompts = [
+    "Are you still there?",
+    "Please say something!",
+    "I cannot hear you.",
+    "Are you still with me?",
+    "I’m waiting for your reply."
+  ];
+  
+  return prompts[Math.floor(Math.random() * prompts.length)];
 }
+
+// function randomRepeat(myArray) {
+//   const randomIndex = Math.floor(Math.random() * myArray.length);
+//   return myArray[randomIndex];
+// }
+
+
+// const userPrompts = [
+//   "Please say something!",
+//   "Are you there?",
+//   "I cannot hear you.",
+//   "Are you still with me?",
+//   "I’m waiting for your reply."
+// ];
+
+// function randomRepeat(count) {
+  
+//   const prompts = [
+//     "Are you still there?",
+//     "Please say something!",
+//     "I cannot hear you.",
+//     "Are you still with me?",
+//     "I’m waiting for your reply."
+//   ];
+  
+//   return prompts[count % prompts.length];  
+// }
+
 
 function getInfoPerson(utterance) {
   const person = utterance?.toLowerCase();
@@ -112,11 +161,11 @@ function getMeetingTime(utterance) {
   return (grammar[utterance.toLowerCase()] || {}).time;
 }
 
-const MAX_NOINPUT = 4;
+const MAX_NOINPUT = 3;
 
-const handleMaxNoInput = (context, send) => {
+const handleMaxNoInput = (context) => {
   if (context.count >= MAX_NOINPUT) {
-    send({ type: 'MAX_NOINPUT_REACHED' });
+    context.ssRef.send({ type: 'MAX_NOINPUT_REACHED' });
   }
 };
 
@@ -172,7 +221,7 @@ const dmMachine = setup({
           utterance: params,
         },
       });
-    },
+    },  
     listen: ({ context }) => {
       context.ssRef.send({
         type: "LISTEN",
@@ -184,18 +233,20 @@ const dmMachine = setup({
   initial: "Prepare",
   context: {
     count: 0,
+    ssRef: null, 
     meetingWithName: "",
     meetingDate: "",
     meetingTime: "",
     response: "",
     isWholeDay: false,
+    userPrompts: [],
   },
   id: "DM",
   states: {
     Prepare: {
       entry: [
         assign({
-          ssRef: ({ spawn }) => spawn(speechstate, { input: settings }),
+          ssRef: ({ spawn }) => spawn(speechstate, { input: settings }),          
         }),
         ({ context }) => context.ssRef.send({ type: "PREPARE" }),
       ],
@@ -211,6 +262,40 @@ const dmMachine = setup({
           },
           on: { SPEAK_COMPLETE: "ListenToStart" },
         },
+        AskForHelp: {
+          entry: ({ context }) =>
+            context.ssRef.send({
+              type: "SPEAK",
+              value: {
+                utterance: "I'm sorry, If you need assistance, simply say 'help'.",
+              },
+            }),
+          on: { SPEAK_COMPLETE: "ListenAskForHelp" },
+        },        
+        ListenAskForHelp: {
+          entry: {
+            type: "listen",
+          },
+          on: {
+            RECOGNISED: [
+              {
+                guard: ({ event }) => event.value?.[0]?.utterance?.toLowerCase() === "help",
+                target: "AskAssist",
+              },
+              {
+                guard: ({ event }) => event.value?.[0]?.utterance?.toLowerCase() === " ",
+                target: "HandleNoInput",
+              },
+            ],
+          },
+        },
+        AskAssist: {
+          entry: {
+            type: "say",
+            params: "How may I help you?",
+          },
+          on: { SPEAK_COMPLETE: "ListenToStart" },
+        },        
         ListenToStart: {
           entry: {
             type: "listen",
@@ -234,29 +319,61 @@ const dmMachine = setup({
             ],
             ASR_NOINPUT: "NOINPUT",
             NOINPUT: {
-              target: "#DM.CreateAppointment.NOINPUT",
+              target: "NOINPUT",
             },
           },
         },
         NOINPUT: {
-          entry: [
-            ({ context, send }) => handleMaxNoInput(context),
+          entry: [            
+            ({ context, send }) => {
+              console.log('NOINPUT State Entered: Count =', context.count);
+              context.count++;  
+              console.log('NOINPUT State After Increment: Count =', context.count);
+              handleMaxNoInput(context);  
+            },            
             ({ context }) =>
               context.ssRef.send({
                 type: "SPEAK",
                 value: {
-                  utterance: randomRepeat(userPrompts),
+                  utterance: randomRepeat(context.userPrompts),  
                 },
               }),
           ],
           on: {
-            SPEAK_COMPLETE: "GetInfoPerson",
-            MAX_NOINPUT_REACHED: "HandleNoInput",
+            SPEAK_COMPLETE: [
+              {
+                guard: (context) => context.count < MAX_NOINPUT,
+                target: "AskAssist",  
+              },
+              {
+                guard: (context) => context.count >= MAX_NOINPUT,
+                target: "HandleNoInput",  
+              },
+            ],
           },
+          on: {
+              SPEAK_COMPLETE: "HandleNoInput",
+              MAX_NOINPUT: "HandleNoInput",
+            },
           after: {
-            5000: "ListenToStart",
+            5000: "AskAssist", 
           },
         },
+        HandleNoInput: {
+          entry: ({ context }) => {
+            console.log('MAX_NOINPUT reached, transitioning to complete'); 
+            context.ssRef.send({
+              type: "SPEAK",
+              value: {
+                utterance: "It seems like you're not there. Please reach out if you need further assistance.",
+              },
+            });
+            context.count = 0;  
+          },
+          on: {
+            SPEAK_COMPLETE: "#Complete",  
+          },
+        }, 
         GetInfoPerson: {
           entry: {
             type: "say",
@@ -284,7 +401,7 @@ const dmMachine = setup({
             ],
             ASR_NOINPUT: "NOINPUT",
             NOINPUT: {
-              target: "#DM.CreateAppointment.NOINPUT",
+              target: "#DM.CreateAppointment.AskAssist",
             },
           },
         },        
@@ -337,17 +454,39 @@ const dmMachine = setup({
             params: "Who would you like to meet?",
           },
           on: {            
-            SPEAK_COMPLETE: "ListenToName",
+            SPEAK_COMPLETE: "meetingWithName",
           },
         },
-        ListenToName: {
+        meetingWithName: {
           entry: {
             type: "listen",
           },
           on: {
             RECOGNISED: [
-              {
-                guard: ({ event }) => isInGrammar(event.value[0].utterance),
+              // {
+              //   guard: ({ event }) => isInGrammar(event.value[0].utterance),
+              //   actions: assign({
+              //     meetingWithName: ({ event }) => {
+              //       const name = getInfoPerson(event.value[0].utterance);
+              //       console.log("Assigned meetingWithName:", name); 
+              //       return name;
+              //     },
+              //   }),
+              //   target: "GetMeetingDay",
+              // },
+              // {
+              //   target: "NotInGrammar",
+              // },
+              {                
+                guard: ({ event }) => {
+                  const utterance = event.value[0].utterance;
+                  const confidence = event.value[0].confidence || 0;
+                  const isValidName = isInGrammar(utterance);
+                  
+                  console.log(`Recognized name: ${utterance}, Confidence: ${confidence}`);                  
+                  
+                  return isValidName && confidence >= 0.7;
+                },
                 actions: assign({
                   meetingWithName: ({ event }) => {
                     const name = getInfoPerson(event.value[0].utterance);
@@ -355,24 +494,25 @@ const dmMachine = setup({
                     return name;
                   },
                 }),
-                target: "AskDay",
+                target: "GetMeetingDay",
               },
               {
+                // Handle case where confidence is low or name is not in grammar
                 target: "NotInGrammar",
               },
             ],
           },
         },                
-        AskDay: {
+        GetMeetingDay: {
           entry: {
             type: "say",
             params: "Which day would you like to schedule the meeting?",
           },
           on: {
-            SPEAK_COMPLETE: "ListenToDay",
+            SPEAK_COMPLETE: "ListenMeetingDay",
           },
         },
-        ListenToDay: {
+        ListenMeetingDay: {
           entry: {
             type: "listen",
           },
@@ -387,70 +527,24 @@ const dmMachine = setup({
                     return date;
                   },
                 }),
-                target: "AskTime",
+                target: "IsWholeDay",
               },
               {
-                target: "NotInGrammar",
+                target: "Help",
               },
             ],
-          },
-        },        
-        AskTime: {
-          entry: {
-            type: "say",
-            params: "What time would you prefer?",
-          },
-          on: {
-            SPEAK_COMPLETE: "ListenToTime",
           },
         },
-        ListenToTime: {
+        Help: {
           entry: {
-            type: "listen",
+            type: "say",
+            params: "Would you like to change the day?",
           },
           on: {
-            RECOGNISED: [
-              {
-                guard: ({ event }) => isInGrammar(event.value[0].utterance),
-                actions: assign({
-                  meetingTime: ({ event }) => {
-                    const time = getMeetingTime(event.value[0].utterance);
-                    console.log("Assigned meetingTime:", time); 
-                    return time;
-                  },
-                }),
-                target: "ConfirmAppointment",
-              },
-              {
-                target: "NotInGrammar",
-              },
-            ],
+            SPEAK_COMPLETE: "ListenToHelpResponse",
           },
-        },        
-        ConfirmAppointment: {
-          entry: [
-            assign({
-              confirmationMessage: ({ context }) => {
-                const { meetingWithName, meetingDate, meetingTime } = context;
-                console.log("Context in ConfirmAppointment:", context); 
-                return `You have scheduled a meeting with ${meetingWithName} It will be on ${meetingDate} at ${meetingTime}. Is that correct?`;
-              },
-            }),
-            ({ context }) => {
-              const { confirmationMessage } = context;
-              context.ssRef.send({
-                type: "SPEAK",
-                value: {
-                  utterance: confirmationMessage || "I couldn't confirm your appointment details.",
-                },
-              });
-            },
-          ],
-          on: {
-            SPEAK_COMPLETE: "ListenToConfirmation",
-          },
-        },                 
-        ListenToConfirmation: {
+        },
+        ListenToHelpResponse: {
           entry: {
             type: "listen",
           },
@@ -458,16 +552,203 @@ const dmMachine = setup({
             RECOGNISED: [
               {
                 guard: ({ event }) => event.value[0].utterance.toLowerCase() === "yes",
-                target: "FinalConfirmation",
+                target: "GetMeetingDay", 
               },
               {
                 guard: ({ event }) => event.value[0].utterance.toLowerCase() === "no",
-                target: "AskHelp",
+                target: "#DM.CreateAppointment", 
               },
             ],
           },
         },
-        FinalConfirmation: {
+        IsWholeDay: {
+          entry: ({ context }) =>
+            context.ssRef.send({
+              type: "SPEAK",
+              value: {
+                utterance: "Will it take the whole day?",
+              },
+            }),
+          on: { SPEAK_COMPLETE: "CheckWholeDay" },
+        },
+        CheckWholeDay: {
+          entry: ({ context }) =>
+            context.ssRef.send({
+              type: "LISTEN",
+            }),
+
+          on: {
+            RECOGNISED: [
+              {
+                guard: ({ event }) => event.value[0].utterance.toLowerCase() === "yes",
+                target: "ConfirmWholeDayAppointment",
+                actions: assign({
+                  isWholeDay: "yes",
+                }),
+              },
+              {
+                guard: ({ event }) => event.value[0].utterance.toLowerCase() === "no",
+                target: "GetMeetingTime",
+                actions: assign({
+                  isWholeDay: "no",
+                }),
+              },
+            ],
+            NOINPUT: {
+              entry: "HandleNoInput",
+              always: "waitForUserInput"
+            }
+          },
+        },
+        GetMeetingTime: {
+          entry: ({ context }) =>
+            context.ssRef.send({
+              type: "SPEAK",
+              value: {
+                utterance: "What time is your meeting?",
+              },
+            }),
+          on: { SPEAK_COMPLETE: "ListenMeetingTime" },
+        },
+        ListenMeetingTime: {
+          entry: ({ context }) =>
+            context.ssRef.send({
+              type: "LISTEN",
+            }),
+          on: {
+            RECOGNISED: {
+              target: "ConfirmAppointment",
+              actions: assign({
+                meetingTime: ({ event }) => event.value[0].utterance.toLowerCase(),
+              }),
+            },
+          },
+        },
+        RepeatPrompt: {
+          entry: ({ context }) =>
+            context.ssRef.send({
+              type: "SPEAK",
+              value: {
+                utterance: "I'm sorry, could you please repeat that? If you need assistance, just say 'help'.",
+              },
+            }),
+          on: { SPEAK_COMPLETE: "ListenMeetingTime", },
+        },
+        ConfirmWholeDayAppointment: {
+          entry: ({ context }) =>
+            context.ssRef.send({
+              type: "SPEAK",
+              value: {
+                utterance: `Do you want to create an appointment with ${context.meetingWithName} It will be on ${context.meetingDate} for the whole day?`,
+              },
+            }),
+          on: { SPEAK_COMPLETE: "ListenConfirmation" },
+        },
+        ConfirmAppointment: {
+          entry: ({ context }) =>
+            context.ssRef.send({
+              type: "SPEAK",
+              value: {
+                utterance: `Do you want to create an appointment with ${context.meetingWithName} It will be on ${context.meetingDate} at ${context.meetingTime}?`,
+              },
+            }),
+          on: { SPEAK_COMPLETE: "ListenConfirmation" },
+        },
+        ListenConfirmation: {
+          entry: ({ context }) =>
+            context.ssRef.send({
+              type: "LISTEN",
+            }),
+          on: {
+            RECOGNISED: [
+              {
+                guard: ({ event }) => event.value[0].utterance.toLowerCase() === "yes",
+                target: "AppointmentCreated",
+              },
+              {
+                guard: ({ event }) => event.value[0].utterance.toLowerCase() === "no",
+                target: "AppointmentNotCreated",
+                actions: assign({
+                  meetingTime: "",
+                  isWholeDay: false,
+                }),
+              },
+            ],
+          },
+        },
+        // AskTime: {
+        //   entry: {
+        //     type: "say",
+        //     params: "What time would you prefer?",
+        //   },
+        //   on: {
+        //     SPEAK_COMPLETE: "ListenToTime",
+        //   },
+        // },
+        // ListenToTime: {
+        //   entry: {
+        //     type: "listen",
+        //   },
+        //   on: {
+        //     RECOGNISED: [
+        //       {
+        //         guard: ({ event }) => isInGrammar(event.value[0].utterance),
+        //         actions: assign({
+        //           meetingTime: ({ event }) => {
+        //             const time = getMeetingTime(event.value[0].utterance);
+        //             console.log("Assigned meetingTime:", time); 
+        //             return time;
+        //           },
+        //         }),
+        //         target: "ConfirmAppointment",
+        //       },
+        //       {
+        //         target: "NotInGrammar",
+        //       },
+        //     ],
+        //   },
+        // },        
+        // ConfirmAppointment: {
+        //   entry: [
+        //     assign({
+        //       confirmationMessage: ({ context }) => {
+        //         const { meetingWithName, meetingDate, meetingTime } = context;
+        //         console.log("Context in ConfirmAppointment:", context); 
+        //         return `You have scheduled a meeting with ${meetingWithName} It will be on ${meetingDate} at ${meetingTime}. Is that correct?`;
+        //       },
+        //     }),
+        //     ({ context }) => {
+        //       const { confirmationMessage } = context;
+        //       context.ssRef.send({
+        //         type: "SPEAK",
+        //         value: {
+        //           utterance: confirmationMessage || "I couldn't confirm your appointment details.",
+        //         },
+        //       });
+        //     },
+        //   ],
+        //   on: {
+        //     SPEAK_COMPLETE: "ListenToConfirmation",
+        //   },
+        // },                 
+        // ListenToConfirmation: {
+        //   entry: {
+        //     type: "listen",
+        //   },
+        //   on: {
+        //     RECOGNISED: [
+        //       {
+        //         guard: ({ event }) => event.value[0].utterance.toLowerCase() === "yes",
+        //         target: "FinalConfirmation",
+        //       },
+        //       {
+        //         guard: ({ event }) => event.value[0].utterance.toLowerCase() === "no",
+        //         target: "AskHelp",
+        //       },
+        //     ],
+        //   },
+        // },
+        AppointmentCreated: {
           entry: {
             type: "say",
             params: "Your meeting has been scheduled. Have a great day!",
@@ -475,7 +756,17 @@ const dmMachine = setup({
           on: {
             SPEAK_COMPLETE: "#Complete",  
           },
-        },        
+        },
+        AppointmentNotCreated: {
+                    entry: ({ context }) =>
+                      context.ssRef.send({
+                        type: "SPEAK",
+                        value: {
+                          utterance: "Your appointment has not been created.",
+                        },
+                      }),
+                    type: "final",
+                  },        
         NotInGrammar: {
           entry: {
             type: "say",
@@ -486,24 +777,39 @@ const dmMachine = setup({
           },
         },
         HandleNoInput: {
-          entry: {
-            type: "say",
-            params: "It seems like you're not there. Please reach out if you need further assistance.",
+          entry: ({ context }) => {
+            console.log('MAX_NOINPUT reached, transitioning to complete'); 
+            context.ssRef.send({
+              type: "SPEAK",
+              value: {
+                utterance: "Sorry, it seems I am not receiving any input. Ending the session now.",
+              },
+            });
+            context.count = 0;  
           },
           on: {
             SPEAK_COMPLETE: "#Complete",  
           },
-        },
+        },        
+        // HandleNoInput: {
+        //   entry: {
+        //     type: "say",
+        //     params: "It seems like you're not there. Please reach out if you need further assistance.",
+        //   },
+        //   on: {
+        //     SPEAK_COMPLETE: "#Complete",  
+        //   },
+        // },
       },
-    },    
+    },
     Complete: {
-      id: "Complete",  
+      id: "Complete",
       initial: "SpeakingComplete",
       states: {
         SpeakingComplete: {
           entry: {
             type: "say",
-            params: "Thank you for using the service!",
+            params: "Thank you for using the App!",
           },
           on: {
             SPEAK_COMPLETE: "Done",
@@ -511,9 +817,40 @@ const dmMachine = setup({
         },
         Done: {
           type: "final",
+          entry: [
+            
+            assign({
+              ssRef: ({ spawn }) => spawn(speechstate, { input: settings }),
+            }),
+            ({ context }) => {
+              
+              console.log("Service completed. Restarting or resetting if necessary.");
+            },
+          ],
         },
+      },      
+      onDone: {
+        target: "Prepare",  
       },
-    },    
+    },
+    // Complete: {
+    //   id: "Complete",  
+    //   initial: "SpeakingComplete",
+    //   states: {
+    //     SpeakingComplete: {
+    //       entry: {
+    //         type: "say",
+    //         params: "Thank you for using the service!",
+    //       },
+    //       on: {
+    //         SPEAK_COMPLETE: "Done",
+    //       },
+    //     },
+    //     Done: {
+    //       type: "final",
+    //     },
+    //   },
+    // },    
   },
 });
 const dmActor = createActor(dmMachine, {
