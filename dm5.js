@@ -1,22 +1,3 @@
-// import { assign, createActor, setup } from "xstate";
-// import { speechstate } from "speechstate";
-// import { createBrowserInspector } from "@statelyai/inspect";
-// import { KEY, NLU_KEY } from "./azure.js";
-
-// const inspector = createBrowserInspector();
-
-// const azureCredentials = {
-//   endpoint: "https://northeurope.api.cognitive.microsoft.com/sts/v1.0/issuetoken",
-//   key: KEY,
-// };
-
-// const azureLanguageCredentials = {
-//   endpoint: "https://260026.cognitiveservices.azure.com/language/:analyze-conversations?api-version=2022-10-01-preview",
-//   key: NLU_KEY,
-//   deploymentName: "Appointment",
-//   projectName: "Appointment",
-// };
-
 import { assign, createActor, setup } from "xstate";
 import { speechstate } from "speechstate";
 import { createBrowserInspector } from "@statelyai/inspect";
@@ -97,6 +78,16 @@ function getResponse(utterance) {
 
 //const userPrompts = ["Please say something!", "Are you there?", "I cannot hear you.", "Are you still with me?", "I’m waiting for your reply."];
 
+const NOINPUT_DELAY = 10000;
+
+const MAX_NOINPUT = 3;
+
+const handleMaxNoInput = (context) => {
+  if (context.count >= MAX_NOINPUT) {
+    context.ssRef.send({ type: 'MAX_NOINPUT_REACHED' });
+  }
+};
+
 function randomRepeat(userPrompts) {
   const prompts = [
     "Are you still there?",
@@ -108,34 +99,6 @@ function randomRepeat(userPrompts) {
   
   return prompts[Math.floor(Math.random() * prompts.length)];
 }
-
-// function randomRepeat(myArray) {
-//   const randomIndex = Math.floor(Math.random() * myArray.length);
-//   return myArray[randomIndex];
-// }
-
-
-// const userPrompts = [
-//   "Please say something!",
-//   "Are you there?",
-//   "I cannot hear you.",
-//   "Are you still with me?",
-//   "I’m waiting for your reply."
-// ];
-
-// function randomRepeat(count) {
-  
-//   const prompts = [
-//     "Are you still there?",
-//     "Please say something!",
-//     "I cannot hear you.",
-//     "Are you still with me?",
-//     "I’m waiting for your reply."
-//   ];
-  
-//   return prompts[count % prompts.length];  
-// }
-
 
 function getInfoPerson(utterance) {
   const person = utterance?.toLowerCase();
@@ -160,14 +123,6 @@ function getMeetingDay(utterance) {
 function getMeetingTime(utterance) {
   return (grammar[utterance.toLowerCase()] || {}).time;
 }
-
-const MAX_NOINPUT = 3;
-
-const handleMaxNoInput = (context) => {
-  if (context.count >= MAX_NOINPUT) {
-    context.ssRef.send({ type: 'MAX_NOINPUT_REACHED' });
-  }
-};
 
 function getMeetingDate(utterance) {
   const today = new Date();
@@ -211,17 +166,14 @@ function getMeetingDate(utterance) {
 
   return utterance;
 }
-
 const dmMachine = setup({
   actions: {
     say: ({ context }, params) => {
       context.ssRef.send({
         type: "SPEAK",
-        value: {
-          utterance: params,
-        },
+        value: { utterance: params },
       });
-    },  
+    },
     listen: ({ context }) => {
       context.ssRef.send({
         type: "LISTEN",
@@ -233,102 +185,64 @@ const dmMachine = setup({
   initial: "Prepare",
   context: {
     count: 0,
-    ssRef: null, 
+    ssRef: null,
     meetingWithName: "",
     meetingDate: "",
     meetingTime: "",
     response: "",
-    isWholeDay: false,
-    userPrompts: [],
+    isWholeDay: false,    
+    userPrompts: [ ]
   },
   id: "DM",
   states: {
     Prepare: {
       entry: [
         assign({
-          ssRef: ({ spawn }) => spawn(speechstate, { input: settings }),          
+          ssRef: ({ spawn }) => spawn(speechstate, { input: settings }),
         }),
         ({ context }) => context.ssRef.send({ type: "PREPARE" }),
       ],
       on: { ASRTTS_READY: "CreateAppointment" },
-    },
+    },    
     CreateAppointment: {
-      initial: "AskHelp",
+      initial: "IntroduceApp",
       states: {
-        AskHelp: {
+        IntroduceApp: {
           entry: {
             type: "say",
-            params: "Hello, how can I help you?",
+            params: "Welcome! This app can assist you with scheduling meetings, retrieving personal information, and more. I’ll guide you through everything step-by-step. Let’s get started!",
           },
+          on: { SPEAK_COMPLETE: "AskHelp" },
+        },
+        AskHelp: {
+          entry: { type: "say", params: "How can I help you?" },
           on: { SPEAK_COMPLETE: "ListenToStart" },
         },
-        AskForHelp: {
-          entry: ({ context }) =>
-            context.ssRef.send({
-              type: "SPEAK",
-              value: {
-                utterance: "I'm sorry, If you need assistance, simply say 'help'.",
-              },
-            }),
-          on: { SPEAK_COMPLETE: "ListenAskForHelp" },
-        },        
-        ListenAskForHelp: {
-          entry: {
-            type: "listen",
-          },
+        ListenToStart: {
+          entry: { type: "listen" },
           on: {
             RECOGNISED: [
               {
-                guard: ({ event }) => event.value?.[0]?.utterance?.toLowerCase() === "help",
-                target: "AskAssist",
-              },
-              {
-                guard: ({ event }) => event.value?.[0]?.utterance?.toLowerCase() === " ",
-                target: "HandleNoInput",
-              },
-            ],
-          },
-        },
-        AskAssist: {
-          entry: {
-            type: "say",
-            params: "How may I help you?",
-          },
-          on: { SPEAK_COMPLETE: "ListenToStart" },
-        },        
-        ListenToStart: {
-          entry: {
-            type: "listen",
-          },
-          on: {
-            RECOGNISED: [              
-              { 
-                //guard: ({ event }) => event.nluValue && event.nluValue.topIntent === "get personal info",               
                 guard: ({ event }) => event.value?.[0]?.utterance?.toLowerCase() === "get personal info",
                 target: "#DM.CreateAppointment.GetInfoPerson",
-              },              
-              { 
-                //guard: ({ event }) => event.nluValue && event.nluValue.topIntent === "create a meeting",               
+              },
+              {
                 guard: ({ event }) => event.value?.[0]?.utterance?.toLowerCase() === "create a meeting",
                 target: "#DM.CreateAppointment.AskName",
               },
               {
-                guard: ({ _, event }) => !event.nluValue || !event.nluValue.topIntent,
+                guard: ({ event }) => !event.value?.[0]?.utterance,
                 target: "NotGrammar",
               },
             ],
             ASR_NOINPUT: "NOINPUT",
-            NOINPUT: {
-              target: "NOINPUT",
-            },
           },
         },
-        NOINPUT: {
+        NOINPUT: {          
           entry: [            
-            ({ context, send }) => {
+            ({ context }) => {
               console.log('NOINPUT State Entered: Count =', context.count);
-              context.count++;  
-              console.log('NOINPUT State After Increment: Count =', context.count);
+              context.count += 1;              
               handleMaxNoInput(context);  
             },            
             ({ context }) =>
@@ -343,7 +257,7 @@ const dmMachine = setup({
             SPEAK_COMPLETE: [
               {
                 guard: (context) => context.count < MAX_NOINPUT,
-                target: "AskAssist",  
+                target: "AskHelp",  
               },
               {
                 guard: (context) => context.count >= MAX_NOINPUT,
@@ -351,15 +265,37 @@ const dmMachine = setup({
               },
             ],
           },
-          on: {
-              SPEAK_COMPLETE: "HandleNoInput",
-              MAX_NOINPUT: "HandleNoInput",
-            },
           after: {
-            5000: "AskAssist", 
+            5000: "AskHelp",  
           },
+          // entry: [
+          //   ({ context }) => {
+          //     console.log('NOINPUT State Entered: Count =', context.count);
+          //     context.count++;
+          //     handleMaxNoInput(context);  
+          //   },
+          //   ({ context }) =>
+          //     context.ssRef.send({
+          //       type: "SPEAK",
+          //       value: {
+          //         utterance: randomRepeat(context.userPrompts),  
+          //       },
+          //     }),
+          // ],
+          // on: {
+          //   SPEAK_COMPLETE: [
+          //     {
+          //       guard: (context) => context.count < MAX_NOINPUT,
+          //       target: "AskHelp",  
+          //     },
+          //     {
+          //       guard: (context) => context.count >= MAX_NOINPUT,
+          //       target: "HandleNoInput",  
+          //     },
+          //   ],
+          // },          
         },
-        HandleNoInput: {
+        HandleNoInput: {          
           entry: ({ context }) => {
             console.log('MAX_NOINPUT reached, transitioning to complete'); 
             context.ssRef.send({
@@ -401,7 +337,7 @@ const dmMachine = setup({
             ],
             ASR_NOINPUT: "NOINPUT",
             NOINPUT: {
-              target: "#DM.CreateAppointment.AskAssist",
+              target: "#DM.CreateAppointment.AskHelp",
             },
           },
         },        
@@ -426,11 +362,55 @@ const dmMachine = setup({
                 },
               });
             },
-          ],
+          ],          
           on: {             
-            SPEAK_COMPLETE: { target: "#Complete" },            
-          },          
-        },                
+            SPEAK_COMPLETE: { target: "MoreHelp" },            
+          },
+        },        
+        MoreHelp: {
+          entry: ({ context }) => 
+            context.ssRef.send({
+              type: "SPEAK",
+              value: {
+                utterance: "Do you need anything else?",
+              }
+            }),
+            on: {
+              SPEAK_COMPLETE: {
+                target: "ListenCheckMoreHelp"
+              }
+            }
+        },
+        ListenCheckMoreHelp:{
+            entry: ({ context }) =>
+            context.ssRef.send({
+              type: "LISTEN",
+            }),
+
+          on: {
+            RECOGNISED: [
+              {
+                guard: ({ event }) => event.value[0].utterance.toLowerCase() === "yes",
+                target: "AskHelp",
+                actions: assign({
+                  MoreHelp: "yes",
+                }),
+              },
+              {
+                guard: ({ event }) => event.value[0].utterance.toLowerCase() === "no",
+                target: "#Complete",
+                actions: assign({
+                  MoreHelp: "no",
+                }),
+              },
+            ],
+            NOINPUT: {
+              entry: "HandleNoInput",
+              always: "waitForUserInput"
+            }
+          },
+
+        }, 
         NotGrammar: {
           entry: {
             type: "say",
@@ -535,14 +515,18 @@ const dmMachine = setup({
             ],
           },
         },
-        Help: {
-          entry: {
-            type: "say",
-            params: "Would you like to change the day?",
-          },
+        Help: {          
+          entry: ({ context }) =>
+            context.ssRef.send({
+              type: "SPEAK",
+              value: {
+                utterance: `There is no time available on this day. You can only book on Mondays and Tuesdays now. Would you like to change the day? `,
+              },
+            }),
           on: {
             SPEAK_COMPLETE: "ListenToHelpResponse",
           },
+          
         },
         ListenToHelpResponse: {
           entry: {
@@ -554,9 +538,14 @@ const dmMachine = setup({
                 guard: ({ event }) => event.value[0].utterance.toLowerCase() === "yes",
                 target: "GetMeetingDay", 
               },
+              
               {
                 guard: ({ event }) => event.value[0].utterance.toLowerCase() === "no",
-                target: "#DM.CreateAppointment", 
+                target: "AppointmentNotCreated",
+                actions: assign({
+                  meetingTime: "",
+                  isWholeDay: false,
+                }),
               },
             ],
           },
@@ -675,79 +664,7 @@ const dmMachine = setup({
               },
             ],
           },
-        },
-        // AskTime: {
-        //   entry: {
-        //     type: "say",
-        //     params: "What time would you prefer?",
-        //   },
-        //   on: {
-        //     SPEAK_COMPLETE: "ListenToTime",
-        //   },
-        // },
-        // ListenToTime: {
-        //   entry: {
-        //     type: "listen",
-        //   },
-        //   on: {
-        //     RECOGNISED: [
-        //       {
-        //         guard: ({ event }) => isInGrammar(event.value[0].utterance),
-        //         actions: assign({
-        //           meetingTime: ({ event }) => {
-        //             const time = getMeetingTime(event.value[0].utterance);
-        //             console.log("Assigned meetingTime:", time); 
-        //             return time;
-        //           },
-        //         }),
-        //         target: "ConfirmAppointment",
-        //       },
-        //       {
-        //         target: "NotInGrammar",
-        //       },
-        //     ],
-        //   },
-        // },        
-        // ConfirmAppointment: {
-        //   entry: [
-        //     assign({
-        //       confirmationMessage: ({ context }) => {
-        //         const { meetingWithName, meetingDate, meetingTime } = context;
-        //         console.log("Context in ConfirmAppointment:", context); 
-        //         return `You have scheduled a meeting with ${meetingWithName} It will be on ${meetingDate} at ${meetingTime}. Is that correct?`;
-        //       },
-        //     }),
-        //     ({ context }) => {
-        //       const { confirmationMessage } = context;
-        //       context.ssRef.send({
-        //         type: "SPEAK",
-        //         value: {
-        //           utterance: confirmationMessage || "I couldn't confirm your appointment details.",
-        //         },
-        //       });
-        //     },
-        //   ],
-        //   on: {
-        //     SPEAK_COMPLETE: "ListenToConfirmation",
-        //   },
-        // },                 
-        // ListenToConfirmation: {
-        //   entry: {
-        //     type: "listen",
-        //   },
-        //   on: {
-        //     RECOGNISED: [
-        //       {
-        //         guard: ({ event }) => event.value[0].utterance.toLowerCase() === "yes",
-        //         target: "FinalConfirmation",
-        //       },
-        //       {
-        //         guard: ({ event }) => event.value[0].utterance.toLowerCase() === "no",
-        //         target: "AskHelp",
-        //       },
-        //     ],
-        //   },
-        // },
+        },        
         AppointmentCreated: {
           entry: {
             type: "say",
@@ -758,15 +675,36 @@ const dmMachine = setup({
           },
         },
         AppointmentNotCreated: {
-                    entry: ({ context }) =>
-                      context.ssRef.send({
-                        type: "SPEAK",
-                        value: {
-                          utterance: "Your appointment has not been created.",
-                        },
-                      }),
-                    type: "final",
-                  },        
+          entry: ({ context }) =>
+            context.ssRef.send({
+              type: "SPEAK",
+              value: {
+                utterance: "Your appointment has not been created.",
+              },
+            }),
+          // after: {
+          //   1000: "#Complete", 
+          // },
+          on: {
+            SPEAK_COMPLETE: "#Complete",  
+          },
+        },
+        Complete: {
+          type: "final",
+        },
+        // AppointmentNotCreated: {
+        //             entry: ({ context }) =>
+        //               context.ssRef.send({
+        //                 type: "SPEAK",
+        //                 value: {
+        //                   utterance: "Your appointment has not been created.",
+        //                 },
+        //                 on: {
+        //                   SPEAK_COMPLETE: "#Complete",  
+        //                 },
+        //               }),
+        //             type: "final",
+        //           },        
         NotInGrammar: {
           entry: {
             type: "say",
@@ -832,25 +770,8 @@ const dmMachine = setup({
       onDone: {
         target: "Prepare",  
       },
-    },
-    // Complete: {
-    //   id: "Complete",  
-    //   initial: "SpeakingComplete",
-    //   states: {
-    //     SpeakingComplete: {
-    //       entry: {
-    //         type: "say",
-    //         params: "Thank you for using the service!",
-    //       },
-    //       on: {
-    //         SPEAK_COMPLETE: "Done",
-    //       },
-    //     },
-    //     Done: {
-    //       type: "final",
-    //     },
-    //   },
-    // },    
+    },  
+        
   },
 });
 const dmActor = createActor(dmMachine, {
